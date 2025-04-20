@@ -1,0 +1,123 @@
+<aura:component controller="FuzzyMDMController" implements="force:appHostable,flexipage:availableForAllPageTypes" access="global">
+  <aura:attribute name="objects" type="List" default="[]"/>
+  <aura:attribute name="selectedObject" type="String"/>
+  <aura:attribute name="fields" type="List" default="[]"/>
+  <aura:attribute name="selectedFields" type="String[]"/>
+  <aura:attribute name="fieldThresholdList" type="Object[]"/>
+  <aura:attribute name="includeDependents" type="Boolean" default="false"/>
+  <aura:attribute name="hasDependents" type="Boolean" default="false"/>
+  <aura:attribute name="isProcessing" type="Boolean" default="false"/>
+  <aura:attribute name="scheduleTime" type="String" default="00:00"/>
+  <aura:attribute name="isScheduled" type="Boolean" default="false"/>
+  <aura:attribute name="errorEmails" type="String" default=""/>
+  <aura:attribute name="isJobScheduledForObject" type="Boolean" default="false"/>
+  <aura:attribute name="startButtonLabel" type="String" default="Start MDM Process Now"/>
+
+  <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+  <lightning:card title="Fuzzy MDM Processor" iconName="utility:merge">
+    <div class="slds-p-around_medium">
+      <lightning:select label="Select Object" value="{!v.selectedObject}" onchange="{!c.handleObjectChange}">
+        <option value="">--Select Object--</option>
+        <aura:iteration items="{!v.objects}" var="obj">
+          <option value="{!obj}">{!obj}</option>
+        </aura:iteration>
+      </lightning:select>
+
+      <lightning:dualListbox
+        label="Fields to Compare"
+        sourceLabel="Available Fields"
+        selectedLabel="Selected Fields"
+        options="{!v.fields}"
+        value="{!v.selectedFields}"
+        disabled="{!v.selectedObject == null}"
+        onchange="{!c.handleFieldChange}"
+      />
+
+      <div class="slds-m-top_medium">
+        <h3 class="slds-text-heading_small">Set Thresholds for Each Field (%)</h3>
+        <aura:iteration items="{!v.fieldThresholdList}" var="fieldThreshold" indexVar="index">
+          <lightning:input
+            type="number"
+            label="{!fieldThreshold.field}"
+            name="{!index}"
+            value="{!fieldThreshold.threshold}"
+            min="0"
+            max="100"
+            messageWhenRangeOverflow="Threshold must be 0-100"
+            messageWhenRangeUnderflow="Threshold must be 0-100"
+            onchange="{!c.handleThresholdChange}"
+          />
+        </aura:iteration>
+      </div>
+
+      <div class="slds-m-top_medium">
+        <lightning:input
+          type="checkbox"
+          label="Include Dependent Records?"
+          checked="{!v.includeDependents}"
+          disabled="{!v.hasDependents == false}"
+          onchange="{!c.handleDependentChange}"
+        />
+        <aura:if isTrue="{!v.hasDependents == false}">
+          <div class="slds-text-color_weak slds-m-left_small">
+            No dependent objects available for this object.
+          </div>
+        </aura:if>
+      </div>
+
+      <div class="slds-m-top_medium">
+        <lightning:input
+          type="text"
+          label="Error Notification Emails (comma-separated)"
+          value="{!v.errorEmails}"
+          placeholder="email1@example.com,email2@example.com"
+          onchange="{!c.handleErrorEmailsChange}"
+        />
+      </div>
+
+      <div class="slds-m-top_medium">
+        <h3 class="slds-text-heading_small">Schedule Daily Run (Optional)</h3>
+        <lightning:input
+          type="time"
+          label="Run Daily At (24-hour format)"
+          value="{!v.scheduleTime}"
+          onchange="{!c.handleScheduleTimeChange}"
+        />
+        <lightning:input
+          type="checkbox"
+          label="Enable Daily Schedule?"
+          checked="{!v.isScheduled}"
+          onchange="{!c.handleScheduleChange}"
+        />
+      </div>
+
+      <div class="slds-m-top_medium">
+        <lightning:button
+          variant="{!v.isJobScheduledForObject ? 'destructive' : 'brand'}"
+          label="{!v.startButtonLabel}"
+          onclick="{!c.handleStartButtonClick}"
+          disabled="{!v.isProcessing}"
+        />
+        <lightning:button
+          variant="neutral"
+          label="Save Schedule"
+          onclick="{!c.saveSchedule}"
+          disabled="{!v.isProcessing}"
+        />
+        <aura:if isTrue="{!v.isJobScheduledForObject}">
+          <lightning:button
+            variant="destructive"
+            label="Remove Schedule"
+            onclick="{!c.removeSchedule}"
+            disabled="{!v.isProcessing}"
+          />
+        </aura:if>
+      </div>
+
+      <aura:if isTrue="{!v.isProcessing}">
+        <div class="slds-text-color_success">MDM Process is running... Check Debug Logs for details.</div>
+      </aura:if>
+    </div>
+  </lightning:card>
+</aura:component>
