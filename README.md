@@ -12,6 +12,8 @@ A custom Master Data Management (MDM) solution for Salesforce that uses fuzzy lo
 - Dynamically changes the "Start MDM Process Now" button to "Terminate MDM Process" if a scheduled job exists for the object.
 - Sends email notifications to user-provided addresses if merge errors occur.
 
+https://github.com/user-attachments/assets/f2c552aa-df99-42a6-91b6-d291e1936da4
+
 ## Installation
 1. Clone this repository.
 2. Deploy the `force-app` folder to your Salesforce org using Salesforce CLI:
