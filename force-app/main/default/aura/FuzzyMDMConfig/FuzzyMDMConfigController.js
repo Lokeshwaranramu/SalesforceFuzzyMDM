@@ -186,34 +186,47 @@
         return;
       }
 
-      // Convert 12-hour format (e.g., "2:30 PM") to 24-hour format (e.g., "14:30")
-      const timeParts = scheduleTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-      if (!timeParts) {
-        // If the time is already in 24-hour format, validate it directly
-        if (!scheduleTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/)) {
-          helper.showToast(component, "Error", "Please provide a valid time in HH:mm format (e.g., 14:30).", "error");
-          return;
-        }
-      } else {
-        let hours = parseInt(timeParts[1], 10);
-        const minutes = timeParts[2];
-        const period = timeParts[3].toUpperCase();
+      // Trim any extra whitespace
+      scheduleTime = scheduleTime.trim();
 
+      // Log the raw scheduleTime for debugging
+      console.log('Raw scheduleTime:', scheduleTime);
+
+      // Check for 12-hour format (e.g., "2:45 AM")
+      const twelveHourParts = scheduleTime.match(/^(0?\d|1[0-2]):([0-5]\d)\s*(AM|PM)$/i);
+      if (twelveHourParts) {
+        let hours = parseInt(twelveHourParts[1], 10);
+        const minutes = twelveHourParts[2];
+        const period = twelveHourParts[3].toUpperCase();
+
+        // Convert 12-hour to 24-hour format
         if (period === "AM" && hours === 12) {
           hours = 0;
         } else if (period === "PM" && hours !== 12) {
           hours += 12;
         }
 
-        // Format the time as HH:mm
+        // Format as HH:mm
         scheduleTime = `${hours.toString().padStart(2, "0")}:${minutes}`;
+        console.log('Converted 12-hour to 24-hour:', scheduleTime);
+      } else {
+        // Check for HH:mm:ss.SSS format (e.g., "00:45:00.000")
+        const fullTimeParts = scheduleTime.match(/^([01]\d|2[0-3]):([0-5]\d):[0-5]\d\.\d{3}$/);
+        if (fullTimeParts) {
+          // Extract just HH:mm
+          scheduleTime = `${fullTimeParts[1]}:${fullTimeParts[2]}`;
+          console.log('Converted HH:mm:ss.SSS to HH:mm:', scheduleTime);
+        }
       }
 
-      // Validate the converted time
+      // Validate the time in HH:mm format
       if (!scheduleTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/)) {
+        console.log('Validation failed for time:', scheduleTime);
         helper.showToast(component, "Error", "Please provide a valid time in HH:mm format (e.g., 14:30).", "error");
         return;
       }
+
+      console.log('Final validated scheduleTime:', scheduleTime);
     }
 
     component.set("v.isProcessing", true);
