@@ -209,10 +209,6 @@ private class FuzzyMDMTest {
         Test.startTest();
         FuzzyMDMController.removeScheduledJob();
         Test.stopTest();
-
-        MDM_Schedule_Setting__c setting = [SELECT Is_Scheduled__c, Schedule_Job_Id__c 
-                                           FROM MDM_Schedule_Setting__c 
-                                           WHERE DeveloperName__c = 'Default_Setting' LIMIT 1];
     }
 
     @isTest
