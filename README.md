@@ -18,6 +18,10 @@ https://github.com/user-attachments/assets/f2c552aa-df99-42a6-91b6-d291e1936da4
 1. Clone this repository.
 2. Deploy the `force-app` folder to your Salesforce org using Salesforce CLI:
 
+or
+
+Try it in your org today by installing the unmanaged package: https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgK0000001AOj
+
 ## Usage
 - Open 'Salesforce_Fuzzy_MDM' page under lightning app builder and activate it by adding it to exisitng lightning apps.
 - Open the page from the added lightning app.
