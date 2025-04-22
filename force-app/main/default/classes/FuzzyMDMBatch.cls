@@ -1,3 +1,10 @@
+/**
+ * @description       : 
+ * @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+ * @group             : 
+ * @last modified on  : 04-22-2025
+ * @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+**/
 public with sharing class FuzzyMDMBatch implements Database.Batchable<sObject>, Database.Stateful {
   private String objectName;
   private List<String> fields;
@@ -169,8 +176,30 @@ public with sharing class FuzzyMDMBatch implements Database.Batchable<sObject>, 
   }
 
   private void copyNonEmptyFields(sObject masterRecord, List<sObject> duplicates) {
+    // Get the describe result for the object to check field writability
+    Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectName);
+    Map<String, Schema.SObjectField> fieldMap = sObjectType.getDescribe().fields.getMap();
+    
+    // Cache the writability of each field
+    Map<String, Boolean> fieldWritability = new Map<String, Boolean>();
+    for (String field : fields) {
+      Schema.SObjectField sField = fieldMap.get(field);
+      if (sField != null) {
+        Schema.DescribeFieldResult fieldDescribe = sField.getDescribe();
+        fieldWritability.put(field, fieldDescribe.isUpdateable() && fieldDescribe.isAccessible());
+      } else {
+        fieldWritability.put(field, false); // Field doesn't exist, mark as not writable
+      }
+    }
+
+    // Copy fields only if they are writable
     for (sObject duplicate : duplicates) {
       for (String field : fields) {
+        // Skip if the field is not writable
+        if (!fieldWritability.get(field)) {
+          continue;
+        }
+
         Object masterValue = masterRecord.get(field);
         Object duplicateValue = duplicate.get(field);
 
