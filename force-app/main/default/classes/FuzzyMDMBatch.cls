@@ -140,6 +140,21 @@ public with sharing class FuzzyMDMBatch implements Database.Batchable<sObject>, 
       updateLookupRelationships(masterRecord.Id, duplicateIds);
     }
 
+    // Query duplicate records to get all fields
+    String query = 'SELECT Id, ' + String.join(fields, ', ') + ' FROM ' + objectName + 
+                   ' WHERE Id IN :duplicateIds WITH SECURITY_ENFORCED';
+    List<sObject> duplicates = Database.query(query);
+
+    // Copy non-empty field values from duplicates to master
+    copyNonEmptyFields(masterRecord, duplicates);
+
+    // Update the master record with copied values
+    Database.SaveResult updateResult = Database.update(masterRecord, false);
+    if (!updateResult.isSuccess()) {
+      throw new AuraHandledException('Failed to update master record: ' + updateResult.getErrors()[0].getMessage());
+    }
+
+    // Delete duplicate records
     String deleteQuery = 'SELECT Id FROM ' + objectName + ' WHERE Id IN :duplicateIds WITH SECURITY_ENFORCED';
     List<sObject> recordsToDelete = Database.query(deleteQuery);
     if (!recordsToDelete.isEmpty()) {
@@ -151,6 +166,21 @@ public with sharing class FuzzyMDMBatch implements Database.Batchable<sObject>, 
       }
     }
     System.debug('Merged ' + duplicateIds.size() + ' duplicates into master record: ' + masterRecord.Id);
+  }
+
+  private void copyNonEmptyFields(sObject masterRecord, List<sObject> duplicates) {
+    for (sObject duplicate : duplicates) {
+      for (String field : fields) {
+        Object masterValue = masterRecord.get(field);
+        Object duplicateValue = duplicate.get(field);
+
+        // Copy the duplicate value to master if master is null/empty and duplicate is not
+        if ((masterValue == null || String.isBlank(String.valueOf(masterValue))) && 
+            duplicateValue != null && String.isNotBlank(String.valueOf(duplicateValue))) {
+          masterRecord.put(field, duplicateValue);
+        }
+      }
+    }
   }
 
   private void reparentDependentRecords(Id masterId, List<Id> duplicateIds) {
